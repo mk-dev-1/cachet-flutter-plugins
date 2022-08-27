@@ -388,6 +388,60 @@ class HealthPlugin(private var channel: MethodChannel? = null) : MethodCallHandl
     }
   }
 
+  private fun writeBloodPressureData(call: MethodCall, result: Result) {
+
+    if (activity == null) {
+      result.success(false)
+      return
+    }
+
+    val date = call.argument<Long>("date")!!
+    val systolic = call.argument<Float>("systolic")!!
+    val diastolic = call.argument<Float>("diastolic")!!
+
+    val dataType = HealthDataTypes.TYPE_BLOOD_PRESSURE
+
+    val typesBuilder = FitnessOptions.builder()
+    typesBuilder.addDataType(dataType, FitnessOptions.ACCESS_WRITE)
+
+    val dataSource = DataSource.Builder()
+      .setDataType(dataType)
+      .setType(DataSource.TYPE_RAW)
+      .setDevice(Device.getLocalDevice(activity!!.applicationContext))
+      .setAppPackageName(activity!!.applicationContext)
+      .build()
+
+    val builder = DataPoint.builder(dataSource)
+      .setTimestamp(date, TimeUnit.MILLISECONDS)
+
+    val dataPoint = builder
+      .setField(HealthFields.FIELD_BLOOD_PRESSURE_SYSTOLIC, systolic.toFloat())
+      .setField(HealthFields.FIELD_BLOOD_PRESSURE_DIASTOLIC, diastolic.toFloat())
+      .build()
+
+    val dataSet = DataSet.builder(dataSource)
+      .add(dataPoint)
+      .build()
+
+    val fitnessOptions = typesBuilder.build()
+    try {
+      val googleSignInAccount =
+        GoogleSignIn.getAccountForExtension(activity!!.applicationContext, fitnessOptions)
+      Fitness.getHistoryClient(activity!!.applicationContext, googleSignInAccount)
+        .insertData(dataSet)
+        .addOnSuccessListener {
+          Log.i("FLUTTER_HEALTH::SUCCESS", "DataSet added successfully!")
+          result.success(true)
+        }
+        .addOnFailureListener { e ->
+          Log.w("FLUTTER_HEALTH::ERROR", "There was an error adding the DataSet", e)
+          result.success(false)
+        }
+    } catch (e3: Exception) {
+      result.success(false)
+    }
+  }
+
   private fun writeWorkoutData(call: MethodCall, result: Result) {
     if (activity == null) {
       result.success(false)
@@ -937,6 +991,7 @@ class HealthPlugin(private var channel: MethodChannel? = null) : MethodCallHandl
       "requestAuthorization" -> requestAuthorization(call, result)
       "getData" -> getData(call, result)
       "writeData" -> writeData(call, result)
+      "writeBloodPressureData" -> writeBloodPressureData(call, result)
       "getTotalStepsInInterval" -> getTotalStepsInInterval(call, result)
       "hasPermissions" -> hasPermissions(call, result)
       "writeWorkoutData" -> writeWorkoutData(call, result)

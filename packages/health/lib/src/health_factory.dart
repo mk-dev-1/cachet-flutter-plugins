@@ -234,6 +234,28 @@ class HealthFactory {
     return success ?? false;
   }
 
+  /// Saves blood pressure data into Apple Health or Google Fit.
+  ///
+  /// Returns true if successful, false otherwise.
+  ///
+  /// Parameters:
+  /// * [systolic] - the blood pressure's systolic value in int
+  /// * [diastolic] - the blood pressure's diastolic value in int
+  /// * [date] - the date/time when [systolic] and [diastolic] were measured.
+  Future<bool> writeBloodPressureData(
+    int systolic,
+    int diastolic,
+    DateTime date,
+  ) async {
+    Map<String, dynamic> args = {
+      'systolic': systolic,
+      'diastolic': diastolic,
+      'date': date.millisecondsSinceEpoch
+    };
+    bool? success = await _channel.invokeMethod('writeBloodPressureData', args);
+    return success ?? false;
+  }
+
   /// Saves audiogram into Apple Health.
   ///
   /// Returns true if successful, false otherwise.
