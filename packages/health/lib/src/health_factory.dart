@@ -256,6 +256,26 @@ class HealthFactory {
     return success ?? false;
   }
 
+  /// Saves oxygen saturation data into Apple Health or Google Fit.
+  ///
+  /// Returns true if successful, false otherwise.
+  ///
+  /// Parameters:
+  /// * [value] - the health data's value in double
+  /// * [date] - the date/time when [value] is measured.
+  Future<bool> writeOxygenSaturationData(
+    double value,
+    DateTime date,
+  ) async {
+    Map<String, dynamic> args = {
+      'value': value,
+      'date': date.millisecondsSinceEpoch
+    };
+    bool? success =
+        await _channel.invokeMethod('writeOxygenSaturationData', args);
+    return success ?? false;
+  }
+
   /// Saves audiogram into Apple Health.
   ///
   /// Returns true if successful, false otherwise.
